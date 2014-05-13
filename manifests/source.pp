@@ -6,27 +6,27 @@ class minecraft::source {
     'vanilla': {
       case $minecraft::source {
         /^(\d+)\.(\d+)\.(\d+)$/: {
-          $download = "https://s3.amazonaws.com/Minecraft.Download/versions/${minecraft::source}/minecraft_server.${minecraft::source}.jar"
-	}
-	'latest': {
-	  # Add code to parse latest release from https://s3.amazonaws.com/Minecraft.Download/versions/versions.json
-	}
-	default: {
+          $download = get_vanilla_url(${minecraft::source})
+        }
+        'latest': {
+          $download = get_vanilla_latest_url("release")
+        }
+        default: {
           fail("Unknown vanilla source string: \'${minecraft::source}\'")
-	}
+        }
       }
     }
-    'snapshots': {
+    'snapshot': {
       case $minecraft::source {
         /^(\d{2})w(\d{2})[a-z]$/: {
-          $download = "https://s3.amazonaws.com/Minecraft.Download/versions/${minecraft::source}/minecraft_server.${minecraft::source}.jar"
+          $download = get_vanilla_url(${minecraft::source})
         }
-	'latest': {
-	  # Add code to parse latest snapshot from https://s3.amazonaws.com/Minecraft.Download/versions/versions.json
-	}
-	default: {
+        'latest': {
+          $download = get_vanilla_latest_url("snapshot")
+        }
+        default: {
           fail("Unknown vanilla snapshots source string: \'${minecraft::source}\'")
-	}
+        }
       }
     }
     'bukkit','craftbukkit': {
@@ -37,18 +37,18 @@ class minecraft::source {
         'beta', 'dev': {
           $download = "http://dl.bukkit.org/latest-${minecraft::source}/craftbukkit-${minecraft::source}.jar"
         }
-	default: {
+        default: {
           fail("Unknown bukkit source string: \'${minecraft::source}\'")
-	}
+        }
     }
     'direct': {
-      $download = $minecraft::source
+      $download = ${minecraft::source}
     }
     default: { # keep old logic in here in case undef or other?
       case $minecraft::source {
         /^(\d+)\.(\d+)\.(\d+)$/, # Matches Semantic Versioning for vanilla Minecraft, see http://semver.org/
         /^(\d{2})w(\d{2})[a-z]$/: { # Matches current versioning scheme for vanilla Minecraft snapshots, uses the same download source url
-          $download = "https://s3.amazonaws.com/Minecraft.Download/versions/${minecraft::source}/minecraft_server.${minecraft::source}.jar"
+          $download = get_vanilla_url(${minecraft::source})
         }
         'recommended', 'rb', 'stable': {
           $download = 'http://dl.bukkit.org/latest-rb/craftbukkit.jar'
@@ -57,7 +57,7 @@ class minecraft::source {
           $download = "http://dl.bukkit.org/latest-${minecraft::source}/craftbukkit-${minecraft::source}.jar"
         }
         default: {
-          $download = $minecraft::source
+          $download = ${minecraft::source}
         }
       }
     }
@@ -66,7 +66,7 @@ class minecraft::source {
   wget::fetch { 'minecraft':
     source      => $download,
     destination => "${minecraft::install_dir}/minecraft_server.jar",
-    user        => $minecraft::user,
-    require     => User[$minecraft::user],
+    user        => ${minecraft::user},
+    require     => User[${minecraft::user}],
   }
 }
